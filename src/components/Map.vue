@@ -34,7 +34,7 @@ export default {
         return function (){
           var myMap = new ymaps.Map("map", {
             center: [51.533561, 46.034265],
-            zoom: 10,
+            zoom: 12,
             controls: []
           }, {
             searchControlProvider: 'yandex#search'
@@ -43,7 +43,7 @@ export default {
             myMap.geoObjects.add(new ymaps.Circle([
               // Координаты центра круга.
               [factory[i].x, factory[i].y],
-              10000
+              factory[i].radius
             ], {}, {
               fillColor: "#DB709377",
               strokeColor: "#990066",
@@ -58,7 +58,16 @@ export default {
               properties: {
                 // Контент метки.
                 iconContent: factory[i].name,
-                hintContent: 'При нажатии можно ввести данные'
+                hintContent: 'При нажатии можно ввести данные',
+                balloonContentHeader: `<span class="description">${factory[i].name}</span>`,
+                // Зададим содержимое основной части балуна.
+                balloonContentBody: `<img src="${factory[i].type == 'factory' ? factory[i].imgUrl : ' '}" ${factory[i].type == 'factory' ? `height="150" width="200"` : ' '} > <br/> ` +
+                    `<b>Имеет: ${factory[i].type == 'factory' ? factory[i].source.length > 1 ? factory[i].source.length+' источника' : factory[i].source.length+' источник' : 'Не имеет источников'} выбросов</b><br/>` +
+                    `<b>Координаты</b> Координаты х:${factory[i].x}   Координаты y:${factory[i].y}<br/> `,
+                // Зададим содержимое нижней части балуна.
+                balloonContentFooter: `<b> Описание: ${factory[i].description}</b>`,
+                // Зададим содержимое всплывающей подсказки.
+
               }
             }, {
               preset: 'islands#blackStretchyIcon',

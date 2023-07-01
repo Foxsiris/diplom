@@ -2,10 +2,9 @@
   <div v-if="showModalRegister" class="modal-mask">
     <div class="modal-wrapper">
       <div class="modal-container">
-
         <div class="modal-header">
           <slot name="header">
-            <h2>Регистрация</h2>
+            <h2>Вход</h2>
           </slot>
         </div>
 
@@ -13,30 +12,20 @@
           <slot name="body">
             <div class="allWrapperIntupData">
               <v-form validate-on="submit" @submit.prevent="submit">
-                <v-text-field
-                    v-model="email"
-                    label="Почта"
-                    :rules="emailRules"
-                    required
-                ></v-text-field>
+                <v-text-field v-model="login" label="Логин"></v-text-field>
               </v-form>
               <v-form validate-on="submit" @submit.prevent="submit">
                 <v-text-field
-                    v-model="login"
-                    label="Логин"
-                ></v-text-field>
-              </v-form>
-              <v-form validate-on="submit" @submit.prevent="submit">
-                <v-text-field
-                    v-model="password"
-                    label="Пароль"
+                  v-model="password"
+                  type="password"
+                  label="Пароль"
                 ></v-text-field>
               </v-form>
               <v-form validate-on="submit" @submit.prevent="submit" v-if="showError">
-                  <h2 class="error">Такой пользователь уже существует</h2>
+                <h2 class="error">Неверный логин или пароль</h2>
               </v-form>
               <v-form validate-on="submit" @submit.prevent="submit" v-if="showGood">
-                <h2 class="good">Пользователь успешно зарегистирован</h2>
+                <h2 class="good">Успешно</h2>
               </v-form>
             </div>
           </slot>
@@ -44,10 +33,14 @@
         <div class="modal-footer">
           <slot name="footer">
             <v-col cols="auto">
-              <v-btn elevation="12" size="small" rounded="lg"  @click="addUser">Зарегистрироваться</v-btn>
+              <v-btn elevation="12" size="small" rounded="lg" @click="checkUser"
+                >Войти</v-btn
+              >
             </v-col>
             <v-col cols="auto">
-              <v-btn elevation="12" size="small" rounded="lg" v-on:click="closeModal">Закрыть</v-btn>
+              <v-btn elevation="12" size="small" rounded="lg" v-on:click="closeModal"
+                >Закрыть</v-btn
+              >
             </v-col>
           </slot>
         </div>
@@ -57,70 +50,71 @@
 </template>
 
 <script>
-import {th} from "vuetify/locale";
-import {addDoc, collection, getDocs} from "firebase/firestore";
-import {db} from "@/main";
+import { th } from "vuetify/locale";
+import { addDoc, collection, getDocs } from "firebase/firestore";
+import { db } from "@/main";
 
 export default {
   name: "register",
-  props:['showModalRegister'],
-  data(){
-    return{
-      showModal:true,
+  props: ["showModalRegister"],
+  data() {
+    return {
+      showModal: true,
       email: null,
       login: null,
       password: null,
-      showError:false,
-      showGood:false,
+      authUser: null,
+      showError: false,
+      showGood: false,
       emailRules: [
-        value => {
-          if (value) return true
+        (value) => {
+          if (value) return true;
 
-          return 'E-mail is requred.'
+          return "E-mail is requred.";
         },
-        value => {
-          if (/.+@.+\..+/.test(value)) return true
+        (value) => {
+          if (/.+@.+\..+/.test(value)) return true;
 
-          return 'E-mail must be valid.'
+          return "E-mail must be valid.";
         },
       ],
-    }
+    };
   },
-  methods:{
-    closeModal(){
-      this.$emit('changeFlagRegister',false)
+  methods: {
+    closeModal() {
+      this.$emit("changeFlagRegister", false);
     },
-    async addUser(){
-        const testData = await getDocs(collection(db, 'Users'))
-        let arrAlluser = []
-        testData.forEach(el=>{
-          arrAlluser.push(el.data())
-        })
-      let flag =false
+    async checkUser() {
+      const testData = await getDocs(collection(db, "Users"));
+      let arrAlluser = [];
+      testData.forEach((el) => {
+        arrAlluser.push(el.data());
+      });
+      let flag = false;
       for (let i = 0; i < arrAlluser.length; i++) {
-          if (arrAlluser[i].login == this.login || arrAlluser[i].email == this.email || arrAlluser[i].password == this.password){
-            flag =true
-          }
+        if (
+          arrAlluser[i].login == this.login &&
+          arrAlluser[i].password == this.password
+        ) {
+          flag = true;
+          this.authUser = arrAlluser[i];
+        }
       }
-      if (flag){
-        this.showError = true;
-        this.login = '';
-        this.password = '';
-        this.email = '';
-        console.log('сработал я 1')
-      }else{
+      if (flag) {
         this.showError = false;
         this.showGood = true;
-        addDoc(collection(db, 'Users'), {
-          login: this.login,
-          email: this.email,
-          password:this.password,
-        });
-        console.log('сработал я 2')
+        localStorage.setItem("role", this.authUser.role);
+        console.log(this.authUser);
+        console.log(this.authUser.role);
+        console.log("сработал я 1");
+      } else {
+        this.showError = true;
+        this.showGood = false;
+        console.log("сработал я 2");
       }
-    }
-  }
-}
+    },
+  },
+};
 </script>
 
 <style scoped>
@@ -166,16 +160,6 @@ export default {
 .modal-default-button {
   float: right;
 }
-
-/*
- * The following styles are auto-applied to elements with
- * transition="modal" when their visibility is toggled
- * by Vue.js.
- *
- * You can easily play with the modal transition by editing
- * these styles.
- */
-
 .modal-enter {
   opacity: 0;
 }
@@ -189,28 +173,27 @@ export default {
   -webkit-transform: scale(1.1);
   transform: scale(1.1);
 }
-.allWrapperIntupData{
+.allWrapperIntupData {
   display: grid;
   grid-template-columns: 1fr;
   grid-gap: 15px;
   justify-content: center;
 }
-.oneInputDataModal{
+.oneInputDataModal {
   align-self: center;
 }
-label{
+label {
   margin-right: 5px;
 }
-.modal-footer{
+.modal-footer {
   display: flex;
   align-items: center;
   justify-content: end;
 }
-.error{
-  color:red;
+.error {
+  color: red;
 }
-.good{
-  color:forestgreen;
+.good {
+  color: forestgreen;
 }
-
 </style>
